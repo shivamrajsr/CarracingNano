@@ -42,7 +42,7 @@
   </style>
 </head>
 <body>
-  <div id="info">CyberPunk Nano Racing<br>Use Arrow Keys or WASD to drive<br><span id="score">Score: 0</span></div>
+  <div id="info">CyberPunk Racing<br>Use Arrow Keys or WASD to drive<br><span id="score">Score: 0</span></div>
   <button id="playPauseBtn" style="position:absolute;top:10px;right:10px;z-index:2;font-size:1.1em;padding:8px 18px;border-radius:8px;border:none;background:#00fff7;color:#222;cursor:pointer;">Pause</button>
   <div id="gameOverOverlay">
     <div class="panel">
@@ -267,6 +267,7 @@
     
     function playAll() {
       bgm.play();
+      bgm.volume = 0.5;
       engine.play();
     }
     function pauseAll() {
@@ -333,6 +334,7 @@
           speed += acc;
           if (!accelPlaying) {
             accel.currentTime = 0;
+            accel.volume = 1;
             accel.play();
             accelPlaying = true;
           }
@@ -357,7 +359,7 @@
         lastZ = car.position.z;
         scoreDisplay.textContent = 'Score: ' + Math.floor(score);
         // Engine sound dynamics
-        engine.volume = Math.min(0.4 + speed/2, 1);
+        engine.volume = Math.min(0.8 + speed/2, 1);
         engine.playbackRate = 0.8 + Math.min(speed / maxSpeed, 1) * 0.9;
         // Camera follows car
         camera.position.lerp(new THREE.Vector3(car.position.x, 5, car.position.z - 10), 0.1);
