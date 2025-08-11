@@ -80,7 +80,7 @@
 
     // Infinite Road (segment-based)
     const roadWidth = 8;
-    const segmentLength = 100;
+    const segmentLength = 200;
     const maintainAheadDistance = 500;   // how far ahead to keep segments
     const maintainBehindDistance = 200;  // how far behind to keep segments
     const roadGeo = new THREE.BoxGeometry(roadWidth, 0.2, segmentLength);
@@ -146,7 +146,7 @@
       }
 
       // Obstacles with probability per segment
-      const obstaclesInSegment = Math.random() < 0.7 ? 1 : 0;
+      const obstaclesInSegment = Math.random() < 0.7 ? 3 : 1;
       for (let i = 0; i < obstaclesInSegment; i++) {
         const minX = -roadWidth/2 + 0.8;
         const maxX = roadWidth/2 - 0.8;
