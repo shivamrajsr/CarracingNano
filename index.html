@@ -79,10 +79,10 @@
     scene.add(dirLight);
 
     // Infinite Road (segment-based)
-    const roadWidth = 8;
-    const segmentLength = 200;
-    const maintainAheadDistance = 500;   // how far ahead to keep segments
-    const maintainBehindDistance = 200;  // how far behind to keep segments
+    const roadWidth = 10;
+    const segmentLength = 400;
+    const maintainAheadDistance = 1000;   // how far ahead to keep segments
+    const maintainBehindDistance = 400;  // how far behind to keep segments
     const roadGeo = new THREE.BoxGeometry(roadWidth, 0.2, segmentLength);
     const roadMat = new THREE.MeshStandardMaterial({color: "#222", emissive: "#00fff7", emissiveIntensity: 0.1});
     const stripeGeo = new THREE.BoxGeometry(0.5, 0.05, 4);
@@ -92,19 +92,24 @@
 
     // Obstacles (dynamic, tied to segments)
     const obstacles = []; // { mesh, box, group }
-    const obstacleGeo = new THREE.BoxGeometry(1, 1, 1.6);
+    const obstacleGeo = new THREE.BoxGeometry(0.8, 1, 1.6);
     const obstacleMatBase = new THREE.MeshStandardMaterial({
       color: "#ff00ea",
-      emissive: "#ff00ea",
-      emissiveIntensity: 0.8,
+      emissive: "#ff0000",
+      emissiveIntensity: 0.6,
       metalness: 0.6,
-      roughness: 0.4
+      roughness: 0.3
     });
 
     function createBuildingMesh(x, z) {
       const height = 4 + Math.random() * 16;
       const geo = new THREE.BoxGeometry(2 + Math.random()*2, height, 2 + Math.random()*2);
-      const color = ["#00fff7", "#ff00ea", "#00ff99", "#fffb00", "#00bfff"][Math.floor(Math.random()*5)];
+      const buildingColors = [
+        "#00fff7", "#ff00ea", "#00ff99", "#fffb00", "#00bfff",
+        "#ff5733", "#33ff57", "#3357ff", "#ff33a6", "#a633ff",
+        "#00ffaa", "#ffaa00", "#ff0066", "#66ff00", "#0066ff"
+      ];
+      const color = buildingColors[Math.floor(Math.random() * buildingColors.length)];
       const mat = new THREE.MeshStandardMaterial({
         color,
         emissive: color,
@@ -116,6 +121,8 @@
       mesh.position.set(x, height/2, z);
       return mesh;
     }
+
+    let initialSegmentIndex = 0; // set after car spawn/reset
 
     function createRoadSegment(zStart) {
       const group = new THREE.Group();
@@ -137,7 +144,7 @@
       for (let dz = 0; dz < segmentLength; dz += 20) {
         for (const side of [-1, 1]) {
           if (Math.random() > 0.4) {
-            const x = side * (roadWidth/2 + 2 + Math.random()*4);
+            const x = side * (roadWidth/2 + 4 + Math.random()*4);
             const z = zStart + dz + Math.random()*10;
             const b = createBuildingMesh(x, z);
             group.add(b);
@@ -145,13 +152,23 @@
         }
       }
 
-      // Obstacles with probability per segment
-      const obstaclesInSegment = Math.random() < 0.7 ? 3 : 1;
+      // Obstacles increase with progress: +1 per segment, capped
+      const segmentIndex = Math.floor(zStart / segmentLength);
+      const progressIndex = Math.max(0, segmentIndex - initialSegmentIndex);
+      const maxObstaclesPerSegment = 3;
+      const obstaclesInSegment = Math.min( progressIndex, maxObstaclesPerSegment);
+      const minX = -roadWidth/2 + 0.8;
+      const maxX = roadWidth/2 - 0.8;
+      const placed = [];
       for (let i = 0; i < obstaclesInSegment; i++) {
-        const minX = -roadWidth/2 + 0.8;
-        const maxX = roadWidth/2 - 0.8;
-        const ox = Math.random() * (maxX - minX) + minX;
-        const oz = zStart + 10 + Math.random() * (segmentLength - 20);
+        let ox, oz;
+        let attempts = 0;
+        do {
+          ox = Math.random() * (maxX - minX) + minX;
+          oz = zStart + 10 + Math.random() * (segmentLength - 20);
+          attempts++;
+        } while (placed.some(p => Math.abs(p.x - ox) < 1.2 && Math.abs(p.z - oz) < 3) && attempts < 10);
+        placed.push({x: ox, z: oz});
         const o = new THREE.Mesh(obstacleGeo, obstacleMatBase.clone());
         o.position.set(ox, 0.5, oz);
         group.add(o);
@@ -227,6 +244,7 @@
     scene.add(car);
     // Seed initial segments around the car
     ensureSegmentsAround(car.position.z);
+    initialSegmentIndex = Math.floor((car.position.z) / segmentLength);
 
     // Car controls
     let speed = 0, maxSpeed = 1.2, acc = 0.03, friction = 0.015, steer = 0;
@@ -292,15 +310,19 @@
         obstacles.splice(j, 1);
       }
       ensureSegmentsAround(car.position.z);
+      initialSegmentIndex = Math.floor((car.position.z) / segmentLength);
       overlay.style.display = 'none';
       playAll();
     }
     restartBtn.onclick = resetGame;
     // Start music on first user interaction (browser policy)
-    window.addEventListener('keydown', function once() {
+    function startAudioOnce() {
       playAll();
-      window.removeEventListener('keydown', once);
-    });
+      window.removeEventListener('keydown', startAudioOnce);
+      window.removeEventListener('pointerdown', startAudioOnce);
+    }
+    window.addEventListener('keydown', startAudioOnce);
+    window.addEventListener('pointerdown', startAudioOnce);
     document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
     document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
@@ -334,8 +356,9 @@
         score += Math.max(0, car.position.z - lastZ);
         lastZ = car.position.z;
         scoreDisplay.textContent = 'Score: ' + Math.floor(score);
-        // Engine sound volume
+        // Engine sound dynamics
         engine.volume = Math.min(0.2 + speed/2, 1);
+        engine.playbackRate = 0.8 + Math.min(speed / maxSpeed, 1) * 0.9;
         // Camera follows car
         camera.position.lerp(new THREE.Vector3(car.position.x, 5, car.position.z - 10), 0.1);
         camera.lookAt(car.position.x, 0.5, car.position.z + 10);
