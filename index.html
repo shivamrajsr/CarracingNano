@@ -320,8 +320,8 @@
           accelPlaying = false;
         }
         if (keys['arrowdown'] || keys['s']) speed -= acc*0.7;
-        if (keys['arrowright'] || keys['a']) steer = Math.max(steer - 0.04, -0.04);
-        else if (keys['arrowleft'] || keys['d']) steer = Math.min(steer + 0.04, 0.04);
+        if (keys['arrowright'] || keys['d']) steer = Math.max(steer - 0.04, -0.04);
+        else if (keys['arrowleft'] || keys['a']) steer = Math.min(steer + 0.04, 0.04);
         else steer *= 0.7;
         speed = Math.max(Math.min(speed, maxSpeed), 0);
         car.position.z += speed * 2;
