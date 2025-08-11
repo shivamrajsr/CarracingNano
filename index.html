@@ -51,9 +51,9 @@
       <button id="restartBtn">Restart</button>
     </div>
   </div>
-  <audio id="bgm" src="https://cdn.pixabay.com/audio/2022/10/16/audio_12b5b2b1b2.mp3" loop></audio>
-  <audio id="engine" src="https://cdn.pixabay.com/audio/2022/03/15/audio_115b9e3b3e.mp3" loop></audio>
-  <audio id="accel" src="https://cdn.pixabay.com/audio/2022/03/15/audio_115b9e3b3e.mp3"></audio>
+  <audio id="bgm" src="/Users/shivamrajsr/CarRacingNano/audio/racingcarsbgmusic.mp3" loop></audio>
+  <audio id="engine" src="" loop></audio>
+  <audio id="accel" src="/Users/shivamrajsr/CarRacingNano/audio/accelarating.mp3"></audio>
   <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
   <script>
     // Scene setup
@@ -357,7 +357,7 @@
         lastZ = car.position.z;
         scoreDisplay.textContent = 'Score: ' + Math.floor(score);
         // Engine sound dynamics
-        engine.volume = Math.min(0.2 + speed/2, 1);
+        engine.volume = Math.min(0.4 + speed/2, 1);
         engine.playbackRate = 0.8 + Math.min(speed / maxSpeed, 1) * 0.9;
         // Camera follows car
         camera.position.lerp(new THREE.Vector3(car.position.x, 5, car.position.z - 10), 0.1);
