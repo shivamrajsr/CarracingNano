@@ -6,10 +6,10 @@
   <title>CyberPunkNano Racing</title>
   <style>
     body { margin: 0; overflow: hidden; background: #0f0c29; }
-    #info {
+    /* #info {
       position: absolute; top: 10px; left: 10px; color: #fff; font-family: monospace;
       background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; z-index: 1;
-    }
+    } */
     #gameOverOverlay {
       position: absolute;
       inset: 0;
@@ -39,10 +39,97 @@
       color: #222;
       cursor: pointer;
     }
+    body {
+            background-color: #0d0d0d; /* Very dark background for high contrast */
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif; /* A font that fits the neon/tech theme */
+            overflow: hidden; /* Prevents scrollbars from appearing */
+            color: #fff;
+        }
+
+        /* This container holds the text and fixes it to the bottom right */
+        .neon-container {
+            position: fixed; /* Position relative to the browser window */
+            bottom: 10px;    /* 20px from the bottom edge */
+            right: 20px;     /* 20px from the right edge */
+            text-align: right;
+        }
+        .neon-container-top {
+            position: fixed; /* Position relative to the browser window */
+            top: 0px;    /* 20px from the bottom edge */
+             /* 20px from the right edge */
+            text-align: center;
+        }
+        .instructions {
+          position: fixed;
+          bottom: 20px;
+          left: 20px;
+          text-align: left;
+        }
+        .neon-text-heading {
+            color: #fff; /* The base text color is white */
+            font-size: 1.6rem; /* Starting font size */
+            /* The text-shadow property is key. We layer multiple shadows to create a soft glow. */
+            text-shadow:
+                0 0 2px #00bfff,   /* Inner, bright cyan glow */
+                0 0 5px #00bfff,  /* Middle cyan glow */
+                0 0 10px #00bfff;  /* Outer magenta glow */
+            
+            /* Apply the flicker animation */
+            animation: flicker 2s infinite alternate;
+        }
+        .texttypethree {
+          color: #fff; /* The base text color is white */
+          font-size: 0.8rem;
+
+        }
+        /* This class creates the neon glow and flicker effect */
+        .neon-text {
+            color: #fff; /* The base text color is white */
+            font-size: 0.5rem; /* Starting font size */
+            /* The text-shadow property is key. We layer multiple shadows to create a soft glow. */
+            text-shadow:
+                0 0 5px #00bfff,   /* Inner, bright cyan glow */
+                0 0 10px #00bfff,  /* Middle cyan glow */
+                0 0 20px #00bfff;  /* Outer magenta glow */
+            
+            /* Apply the flicker animation */
+            animation: flicker 2s infinite alternate;
+        }
+
+        /* Keyframe animation for the flickering effect */
+        @keyframes flicker {
+            /* These percentages define when the glow is on or off */
+            0%, 18%, 22%, 25%, 53%, 57%, 100% {
+                /* Full glow effect */
+                text-shadow:
+                    0 0 4px #fff,
+                    0 0 11px #00bfff,
+                    0 0 19px #00bfff,
+                    0 0 40px #ff00ff,
+                    0 0 80px #ff00ff,
+                    0 0 90px #ff00ff;
+            }
+            /* At these points in the animation, the glow briefly turns off */
+            20%, 24%, 55% {
+                text-shadow: none;
+            }
+        }
+
+        
   </style>
 </head>
 <body>
-  <div id="info">CyberPunk Racing<br>Use Arrow Keys or WASD to drive<br><span id="score">Score: 0</span></div>
+  <div class="neon-container-top"> <p class="neon-text-heading">CyberPunk Racing</p><span id="score">Score: 0</span></div>
+  <div class="instructions"><p class="texttypethree">1. Avoid hitting red blocks<br>2. Difficulty increases with the score</br>Lets see how much you can score!!!</p>Use Arrow Keys or WASD to drive</div>
+  <div class="neon-container">
+    <p class="neon-text">GenAIGames@SR</p>
+</div>
   <button id="playPauseBtn" style="position:absolute;top:10px;right:10px;z-index:2;font-size:1.1em;padding:8px 18px;border-radius:8px;border:none;background:#00fff7;color:#222;cursor:pointer;">Pause</button>
   <div id="gameOverOverlay">
     <div class="panel">
@@ -100,7 +187,7 @@
       metalness: 0.6,
       roughness: 0.3
     });
-
+    let score = 0;
     function createBuildingMesh(x, z) {
       const height = 4 + Math.random() * 16;
       const geo = new THREE.BoxGeometry(2 + Math.random()*2, height, 2 + Math.random()*2);
@@ -155,8 +242,8 @@
       // Obstacles increase with progress: +1 per segment, capped
       const segmentIndex = Math.floor(zStart / segmentLength);
       const progressIndex = Math.max(0, segmentIndex - initialSegmentIndex);
-      const maxObstaclesPerSegment = 3;
-      const obstaclesInSegment = Math.min( progressIndex, maxObstaclesPerSegment);
+      const maxObstaclesPerSegment = 6;
+      const obstaclesInSegment = Math.min( score/800, maxObstaclesPerSegment);
       const minX = -roadWidth/2 + 0.8;
       const maxX = roadWidth/2 - 0.8;
       const placed = [];
@@ -223,33 +310,71 @@
     
 
     // Car
+    const NANO = {
+      cyan: 0x00ffe1,
+      magenta: 0xff3ccf,
+      lime: 0xb8ff00,
+      sky: 0x7fe3ff,
+      base: 0xadd8e6 // light blue base for subtle panels
+    };
+
+    // Car group
     const car = new THREE.Group();
-    const carBodyGeo = new THREE.BoxGeometry(1.2, 0.5, 2.5);
-    const carBodyMat = new THREE.MeshStandardMaterial({color: "#0341a3", emissive: "#00fff7", emissiveIntensity: 1.5});
-    const carBody = new THREE.Mesh(carBodyGeo, carBodyMat);
-    carBody.position.y = 0.35;
-    car.add(carBody);
-    // Wheels
-    const wheelGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.4, 16);
-    const wheelMat = new THREE.MeshStandardMaterial({color: "#222"});
-    for (let x of [-0.5, 0.5]) {
-      for (let z of [-0.9, 0.9]) {
-        const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-        wheel.rotation.z = Math.PI/2;
-        wheel.position.set(x, 0.15, z);
-        car.add(wheel);
-      }
+
+    // Main body (rounded-ish using merged boxes)
+    const bodyBase = new THREE.BoxGeometry(1.6, 1, 3.2);
+    bodyBase.translate(0, 0.45, 0);
+    const bodyMat = new THREE.MeshStandardMaterial({color: NANO.base, emissive: NANO.cyan, emissiveIntensity: 1.0, metalness:0.6, roughness:0.12});
+    const body = new THREE.Mesh(bodyBase, bodyMat);
+    car.add(body);
+
+    // Nano accent panels (magenta & lime)
+    const accent1 = new THREE.BoxGeometry(1.2, 0.06, 0.7);
+    accent1.translate(0, 0.62, -1.6);
+    const a1 = new THREE.Mesh(accent1, new THREE.MeshStandardMaterial({color:NANO.magenta, emissive:NANO.magenta, emissiveIntensity:0.9, metalness:0.8, roughness:0.05}));
+    car.add(a1);
+
+    const accent2 = accent1.clone();
+    // BUG FIX: BufferGeometry doesn't have translateZ; use translate(x,y,z)
+    accent2.translate(0, 0, -0.8);
+    const a2 = new THREE.Mesh(accent2, new THREE.MeshStandardMaterial({color:NANO.lime, emissive:NANO.lime, emissiveIntensity:0.75, metalness:0.7, roughness:0.06}));
+    car.add(a2);
+
+    // Cockpit (glass)
+    const cockpitGeo = new THREE.BoxGeometry(1, 0.5, 1)
+    cockpitGeo.translate(0, 0.85, 0);
+    const cockpitMat = new THREE.MeshPhysicalMaterial({color:0x071022, transmission:0.7, transparent:true, opacity:0.85, metalness:0.1, roughness:0.02, ior:1.2});
+    const cockpit = new THREE.Mesh(cockpitGeo, cockpitMat);
+    car.add(cockpit);
+
+
+    // Wheels (stylized rings)
+    function makeWheel(x,z){
+      const rim = new THREE.CylinderGeometry(0.36,0.36,0.28,24);
+      rim.rotateZ(Math.PI/2);
+      rim.translate(x,0.1,z);
+      const rimMat = new THREE.MeshStandardMaterial({color:0x05050a, metalness:0.95, roughness:0.25});
+      const rimMesh = new THREE.Mesh(rim, rimMat);
+
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.22, 0.28, 32), new THREE.MeshBasicMaterial({color:NANO.cyan, side:THREE.DoubleSide}));
+      ring.rotation.y = Math.PI/2; ring.position.set(x,0.12,z); ring.userData.isNeon = true;
+
+      const g = new THREE.Group(); g.add(rimMesh); g.add(ring);
+      return g;
     }
-    car.position.set(0, 0.25, -50);
+    car.add(makeWheel(0.90, -0.8)); car.add(makeWheel(-0.90, -0.8)); car.add(makeWheel(0.90, 0.8)); car.add(makeWheel(-0.90, 0.8));
+
+    car.scale.set(0.95,0.95,0.95);
+    car.position.y = 0;
     scene.add(car);
-    // Seed initial segments around the car
+  
     ensureSegmentsAround(car.position.z);
     initialSegmentIndex = Math.floor((car.position.z) / segmentLength);
 
     // Car controls
-    let speed = 0, maxSpeed = 1.2, acc = 0.03, friction = 0.015, steer = 0;
+    let speed = 0, maxSpeed = 1.4, acc = 0.04, friction = 0.016, steer = 0;
     let keys = {};
-    let score = 0;
+    // let score = 0;
     let lastZ = car.position.z;
     let paused = false;
     let gameOver = false;
@@ -267,7 +392,7 @@
     
     function playAll() {
       bgm.play();
-      bgm.volume = 0.5;
+      bgm.volume = 0.4;
       engine.play();
     }
     function pauseAll() {
